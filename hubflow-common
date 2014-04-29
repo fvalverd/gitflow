@@ -217,7 +217,7 @@ hubflow_is_support_branch() {
 }
 
 hubflow_is_support_hotfix_branch() {
-    $(git_current_branch | grep "^$HOTFIX_PREFIX" | grep -q "/$SUPPORT_PREFIX/")
+    $(git_current_branch | grep  -q "^$HOTFIX_PREFIX/$SUPPORT_PREFIX")
 }
 
 # loading settings that can be overridden using git config
