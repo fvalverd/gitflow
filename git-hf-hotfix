@@ -185,6 +185,7 @@ cmd_start() {
 	parse_args "$@"
 	if hubflow_is_support_branch ; then
 		BASE=$CURRENT_BRANCH
+		HOTFIX_BRANCH="$BASE/$HOTFIX_PREFIX/$VERSION"
 	else
 		BASE=$MASTER_BRANCH
 	fi
@@ -207,9 +208,6 @@ cmd_start() {
 
 	# create branch
 	git checkout -b "$HOTFIX_BRANCH" "$BASE" || die "Unable to create branch '$HOTFIX_BRANCH'"
-
-	# remember where to merge it back to
-	git_config_set_branch "$HOTFIX_BRANCH" hubflowBase "$BASE"
 
 	# push it back up to remote repo
 	hubflow_push_latest_changes_to_origin
@@ -265,16 +263,21 @@ cmd_finish() {
 	fi
 
 	# where are we merging into?
-	BASE=$(git_config_get_branch $HOTFIX_BRANCH hubflowBase)
+	BASE="$MASTER_BRANCH"
+	if hubflow_is_support_hotfix_branch; then
+		local _SUPPORT_HOTFIX_SUFIX="${HOTFIX_BRANCH#$HOTFIX_PREFIX/$SUPPORT_PREFIX}"
+		BASE="$SUPPORT_PREFIX/${_SUPPORT_HOTFIX_SUFIX%/*}"
+		VERSION="${_SUPPORT_HOTFIX_SUFIX#*/}"
+	fi
 	if [[ $BASE == $MASTER_BRANCH ]] ; then
-		# this is a release made from develop
+		# this is a hotfix made from MASTER
 		#
 		# we must merge it into MASTER and DEVELOP
 		tag_branch="$MASTER_BRANCH"
 		additional_branch="$DEVELOP_BRANCH"
 		final_branch="$DEVELOP_BRANCH"
 	else
-		# this is a release made from a support branch
+		# this is a hotfix made from a support branch
 		#
 		# we must merge it back into the support branch
 		tag_branch="$BASE"

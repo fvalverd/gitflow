@@ -216,6 +216,10 @@ hubflow_is_support_branch() {
     $(git_current_branch | grep -q "^$SUPPORT_PREFIX")
 }
 
+hubflow_is_support_hotfix_branch() {
+    $(git_current_branch | grep "^$HOTFIX_PREFIX" | grep -q "/$SUPPORT_PREFIX/")
+}
+
 # loading settings that can be overridden using git config
 hubflow_load_settings() {
 	export DOT_GIT_DIR=$(git rev-parse --git-dir 2>/dev/null)
