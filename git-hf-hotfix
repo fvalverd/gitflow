@@ -180,6 +180,15 @@ use_current_hotfix_branch_name() {
 	fi
 }
 
+set_base_branch() {
+	BASE="$MASTER_BRANCH"
+	if hubflow_is_support_hotfix_branch; then
+		local _SUPPORT_HOTFIX_SUFIX="${HOTFIX_BRANCH#$HOTFIX_PREFIX/$SUPPORT_PREFIX}"
+		BASE="$SUPPORT_PREFIX/${_SUPPORT_HOTFIX_SUFIX%/*}"
+		VERSION="${_SUPPORT_HOTFIX_SUFIX#*/}"
+	fi
+}
+
 cmd_start() {
 	DEFINE_boolean fetch true "fetch from $ORIGIN before creating the new branch" F
 	parse_args "$@"
@@ -263,12 +272,7 @@ cmd_finish() {
 	fi
 
 	# where are we merging into?
-	BASE="$MASTER_BRANCH"
-	if hubflow_is_support_hotfix_branch; then
-		local _SUPPORT_HOTFIX_SUFIX="${HOTFIX_BRANCH#$HOTFIX_PREFIX/$SUPPORT_PREFIX}"
-		BASE="$SUPPORT_PREFIX/${_SUPPORT_HOTFIX_SUFIX%/*}"
-		VERSION="${_SUPPORT_HOTFIX_SUFIX#*/}"
-	fi
+	set_base_branch
 	if [[ $BASE == $MASTER_BRANCH ]] ; then
 		# this is a hotfix made from MASTER
 		#
@@ -445,14 +449,14 @@ cmd_cancel() {
 	fi
 
 	# where did this branch come from?
-	BASE=$(git_config_get_branch $HOTFIX_BRANCH hubflowBase)
+	set_base_branch
 	if [[ $BASE == $MASTER_BRANCH ]] ; then
-		# this is a hotfix made from master
+		# this is a hotfix made from MASTER
 		#
 		# if we are not discarding it, we will merge it into DEVELOP
 		merge_branch="$DEVELOP_BRANCH"
 	else
-		# this is a release made from a support branch
+		# this is a hotfix made from a support branch
 		#
 		# we must merge it back into the support branch
 		merge_branch="$BASE"
